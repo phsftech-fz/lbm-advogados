@@ -1,5 +1,6 @@
 # --- Stage 1: Build ---
-FROM node:20-alpine AS builder
+# Debian (slim) evita erros de OpenSSL/libssl do Prisma em Alpine
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -14,7 +15,7 @@ COPY src ./src/
 RUN npm run build
 
 # --- Stage 2: Runtime ---
-FROM node:20-alpine AS runtime
+FROM node:20-slim AS runtime
 
 WORKDIR /app
 
@@ -25,9 +26,10 @@ RUN npm ci
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Script de entrada: migrações e depois inicia a API
+# Script de entrada: generate, migrações e depois inicia a API
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
     echo 'set -e' >> /entrypoint.sh && \
+    echo 'npx prisma generate' >> /entrypoint.sh && \
     echo 'npx prisma migrate deploy' >> /entrypoint.sh && \
     echo 'exec node dist/index.js' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
