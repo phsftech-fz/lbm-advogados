@@ -15,6 +15,7 @@ Exemplos:
 - `DATABASE_URL`: connection string do Postgres (host = nome do serviço ou URL no EasyPanel)
 - `MINIO_ENDPOINT`: host do MinIO (nome do serviço ou URL)
 - `JWT_SECRET`: segredo forte em produção
+- `CORS_ORIGIN`: URL do frontend (ex: `https://app.seudominio.com`). Várias: separadas por vírgula. **Obrigatório em produção** para o browser aceitar chamadas à API.
 
 ## Frontend
 
