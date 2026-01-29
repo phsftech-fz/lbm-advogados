@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      UserRole   @default(ADVOGADO)
+  avatarUrl String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  documents Document[]
+  events    Event[]
+  processes Process[]
+
+  @@map("users")
+}
+
+model Client {
+  id         String              @id @default(uuid())
+  type       ClientType
+  name       String
+  cpfCnpj    String              @unique
+  rgIe       String?
+  email      String?
+  phone      String?
+  cep        String?
+  street     String?
+  number     String?
+  city       String?
+  state      String?
+  status     String              @default("ATIVO")
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  documents  Document[]
+  monitoring ProcessMonitoring[]
+  processes  Process[]
+
+  @@map("clients")
+}
+
+model Process {
+  id                String        @id @default(uuid())
+  processNumber     String        @unique
+  referenceNumber   String?
+  clientId          String
+  responsibleUserId String
+  lawArea           LawArea
+  subArea           String?
+  status            ProcessStatus
+  priority          Priority      @default(NORMAL)
+  title             String
+  description       String?
+  value             Float?
+  court             String?
+  comarca           String?
+  lastUpdate        DateTime      @default(now())
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  documents         Document[]
+  events            Event[]
+  client            Client        @relation(fields: [clientId], references: [id])
+  responsibleUser   User          @relation(fields: [responsibleUserId], references: [id])
+
+  @@map("processes")
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  processId   String
+  userId      String
+  title       String
+  description String?
+  date        DateTime
+  type        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  process     Process  @relation(fields: [processId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("events")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  processId   String?
+  clientId    String?
+  userId      String
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  client      Client?  @relation(fields: [clientId], references: [id])
+  process     Process? @relation(fields: [processId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("documents")
+}
+
+model ProcessMonitoring {
+  id            String   @id @default(uuid())
+  clientId      String
+  cnpj          String
+  lastScan      DateTime @default(now())
+  newCasesCount Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  client        Client   @relation(fields: [clientId], references: [id])
+
+  @@unique([clientId, cnpj])
+  @@map("process_monitoring")
+}
+
+enum UserRole {
+  ADMIN
+  SOCIO_SENIOR
+  ADVOGADO
+  ASSISTENTE
+}
+
+enum ClientType {
+  PESSOA_FISICA
+  PESSOA_JURIDICA
+}
+
+enum ProcessStatus {
+  EM_ANDAMENTO
+  AGUARDANDO_AUDIENCIA
+  CONCLUSO_PARA_SENTENCA
+  ARQUIVADO
+  SUSPENSO
+  RECURSO
+  FAVORAVEL
+  PRAZO_EM_ABERTO
+}
+
+enum LawArea {
+  CIVEL
+  TRABALHISTA
+  TRIBUTARIO
+  CRIMINAL
+  FAMILIA
+  EMPRESARIAL
+  ADMINISTRATIVO
+}
+
+enum Priority {
+  BAIXA
+  NORMAL
+  URGENTE
+}
